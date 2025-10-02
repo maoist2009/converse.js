@@ -64,7 +64,7 @@ describe("Groupchats", function () {
             const csntext = await u.waitUntil(() => view.querySelector('.chat-content__notifications').textContent);
             expect(csntext.trim()).toEqual("nicky has entered the groupchat");
 
-            // An instant room is created by saving the default configuratoin.
+            // An instant room is created by saving the default configuration.
             const selector = `query[xmlns="${Strophe.NS.MUC_OWNER}"]`;
             IQ_stanzas = _converse.api.connection.get().IQ_stanzas;
             const iq = await u.waitUntil(() => IQ_stanzas.filter((s) => sizzle(selector, s).length).pop());
@@ -1763,7 +1763,7 @@ describe("Groupchats", function () {
                     `iq[to="${muc_jid}"] query[xmlns="http://jabber.org/protocol/disco#info"]`
                 )).pop());
 
-            // Check that the groupchat queried for the feautures.
+            // Check that the groupchat queried for the features.
             expect(stanza).toEqualStanza(stx`
                 <iq from="romeo@montague.lit/orchard"
                         id="${stanza.getAttribute("id")}"
@@ -1822,7 +1822,7 @@ describe("Groupchats", function () {
             await mock.openAndEnterMUC(_converse, muc_jid, 'romeo', features);
             const view = _converse.chatboxviews.get(muc_jid);
 
-            const info_el = view.querySelector(".show-muc-details-modal");
+            const info_el = await u.waitUntil(() => view.querySelector(".show-muc-details-modal"));
             info_el.click();
             let modal = _converse.api.modal.get('converse-muc-details-modal');
             await u.waitUntil(() => u.isVisible(modal), 1000);
@@ -1831,7 +1831,7 @@ describe("Groupchats", function () {
             let features_shown = Array.from(features_list.children).map((e) => e.textContent);
             expect(features_shown.length).toBe(5);
 
-            expect(features_shown.join(' ')).toBe(
+            expect(features_shown.join(' ').trim()).toBe(
                 'Password protected - This groupchat requires a password before entry '+
                 'Open - Anyone can join this groupchat '+
                 'Temporary - This groupchat will disappear once the last person leaves '+

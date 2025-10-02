@@ -2,7 +2,7 @@ import { getOpenPromise } from '@converse/openpromise';
 import _converse from '../../shared/_converse.js';
 import api from '../../shared/api/index.js';
 import converse from '../../shared/api/public.js';
-import log from "@converse/log";
+import log from '@converse/log';
 
 const { Strophe, $iq } = converse.env;
 
@@ -152,9 +152,10 @@ export default {
          * @method api.disco.info
          * @param {string} jid The Jabber ID of the entity to query
          * @param {string} [node] A specific node identifier associated with the JID
+         * @param {import('./types').DiscoInfoOptions} [options]
          * @returns {promise} Promise which resolves once we have a result from the server.
          */
-        info(jid, node) {
+        info(jid, node, options) {
             const attrs = { xmlns: Strophe.NS.DISCO_INFO };
             if (node) {
                 attrs.node = node;
@@ -164,7 +165,7 @@ export default {
                 'to': jid,
                 'type': 'get',
             }).c('query', attrs);
-            return api.sendIQ(info);
+            return api.sendIQ(info, options?.timeout);
         },
 
         /**
@@ -197,6 +198,48 @@ export default {
          */
         entities: {
             /**
+             * Finds the first entity advertising a given feature.
+             *
+             * @method api.disco.entities.find
+             * @param {string} feature The feature var to search for.
+             * @param {string} [jid] The entity JID whose subtree to search. If omitted, own bare JID and domain are queried.
+             * @returns {Promise<DiscoEntity[]>} An array of matching DiscoEntity instances.
+             */
+            async find(feature, jid) {
+                await api.waitUntil('discoInitialized');
+                const disco_entities = /** @type {DiscoEntities} */ (_converse.state.disco_entities);
+                if (!disco_entities) return [];
+
+                const candidates = [];
+                if (jid) {
+                    const entity = await api.disco.entities.get(jid, true);
+                    if (entity) {
+                        const items = await api.disco.entities.items(jid);
+                        candidates.push(entity, ...items);
+                    }
+                } else {
+                    const bare_jid = _converse.session.get('bare_jid');
+                    const bare_entity = await api.disco.entities.get(bare_jid, true);
+                    if (bare_entity) candidates.push(bare_entity);
+
+                    const domain = Strophe.getDomainFromJid(bare_jid);
+                    const domain_entity = await api.disco.entities.get(domain, true);
+                    if (domain_entity) {
+                        const items = await api.disco.entities.items(domain);
+                        candidates.push(domain_entity, ...items);
+                    }
+                }
+
+                const unique = Array.from(new Map(candidates.map((e) => [e.get('jid'), e])).values());
+                const checks = unique.map(async (entity) => {
+                    const has = await entity.getFeature(feature);
+                    return has ? entity : null;
+                });
+                const results = await Promise.all(checks);
+                return results.filter((e) => e);
+            },
+
+            /**
              * Get the corresponding `DiscoEntity` instance.
              *
              * @method api.disco.entities.get
@@ -224,18 +267,22 @@ export default {
             },
 
             /**
-             * Return any disco items advertised on this entity
+             * Return the disco items advertised on this entity
              *
              * @method api.disco.entities.items
              * @param {string} jid - The Jabber ID of the entity for which we want to fetch items
+             * @returns {Promise<DiscoEntity[]>}
              * @example api.disco.entities.items(jid);
              */
             async items(jid) {
                 const entity = await api.disco.entities.get(jid);
-                await entity.waitUntilItemsFetched;
+                if (entity) {
+                    await entity.waitUntilItemsFetched;
 
-                const disco_entities = /** @type {DiscoEntities} */ (_converse.state.disco_entities);
-                return disco_entities.filter((e) => e.get('parent_jids')?.includes(jid));
+                    const item_jids = entity.get('items') || [];
+                    return Promise.all(item_jids.map(/** @param {string} jid */ (jid) => api.disco.entities.get(jid)));
+                }
+                return [];
             },
 
             /**
@@ -300,11 +347,7 @@ export default {
                 }
 
                 const items = await api.disco.entities.items(jid);
-
-                const promises = [
-                    entity.getFeature(feature),
-                    ...items.map((i) => i.getFeature(feature)),
-                ];
+                const promises = [entity.getFeature(feature), ...items.map((i) => i.getFeature(feature))];
                 const result = await Promise.all(promises);
                 return result.filter((f) => f instanceof Object);
             },
@@ -381,11 +424,12 @@ export default {
          * disco entity by refetching them from the server
          * @method api.disco.refresh
          * @param {string} jid The JID of the entity whose features are refreshed.
+         * @param {import('./types').DiscoInfoOptions} [options]
          * @returns {Promise} A promise which resolves once the features have been refreshed
          * @example
          * await api.disco.refresh('room@conference.example.org');
          */
-        async refresh(jid) {
+        async refresh(jid, options) {
             if (!jid) throw new TypeError('api.disco.refresh: You need to provide an entity JID');
 
             await api.waitUntil('discoInitialized');
@@ -400,10 +444,10 @@ export default {
                 if (!entity.waitUntilItemsFetched.isPending) {
                     entity.waitUntilItemsFetched = getOpenPromise();
                 }
-                entity.queryInfo();
+                entity.queryInfo(options);
             } else {
                 // Create it if it doesn't exist
-                entity = await api.disco.entities.create({ jid }, { ignore_cache: true });
+                entity = await api.disco.entities.create({ jid }, { ignore_cache: true, timeout: options.timeout });
             }
             return entity.waitUntilItemsFetched;
         },

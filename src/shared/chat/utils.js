@@ -2,7 +2,6 @@
  * @typedef {import('plugins/chatview/types').HeadingButtonAttributes} HeadingButtonAttributes
  * @typedef {import('@converse/headless').Message} Message
  * @typedef {import('@converse/headless').MUCMessage} MUCMessage
- * @typedef {import('@converse/skeletor').Model} Model
  * @typedef {import('lit').TemplateResult} TemplateResult
  */
 import { api, converse } from '@converse/headless';
@@ -29,7 +28,7 @@ export function getChatStyle(model) {
 }
 
 /**
- * @param {Model} model
+ * @param {import('@converse/headless').Model} model
  */
 export function getUnreadMsgsDisplay(model) {
     const num_unread = model.get('num_unread') || 0;
@@ -251,7 +250,7 @@ export function addEmojisMarkup(text, options) {
  *
  * @namespace u
  * @method u.shortnamesToEmojis
- * @param {String} str - String containg the shortname(s)
+ * @param {String} str - String containing the shortname(s)
  * @param {Object} options
  * @param {Boolean} options.unicode_only - Whether emojis are rendered as
  *  unicode codepoints. If so, the returned result will be an array

@@ -42,7 +42,7 @@ export default {
                         from="${full_jid}"
                         type="get"
                         to="${entity_jid}">
-                    <pubsub xmlns="${Strophe.NS.PUBSUB}"><configure node="${node}"/></pubsub>
+                    <pubsub xmlns="${Strophe.NS.PUBSUB}#owner"><configure node="${node}"/></pubsub>
                     </iq>`;
 
                 let response;
@@ -83,7 +83,7 @@ export default {
                                 <field var="FORM_TYPE" type="hidden">
                                     <value>${Strophe.NS.PUBSUB}#nodeconfig</value>
                                 </field>
-                                ${Object.entries(new_config).map(([k, v]) => stx`<field var="${k}"><value>${v}</value></field>`)}
+                                ${Object.entries(new_config).map(([k, v]) => stx`<field var="pubsub#${k}"><value>${v}</value></field>`)}
                             </x>
                         </configure>
                     </pubsub>

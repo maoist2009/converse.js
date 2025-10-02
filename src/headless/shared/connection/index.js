@@ -74,11 +74,11 @@ export class Connection extends Strophe.Connection {
     }
 
     /**
-     * Adds support for XEP-0156 by quering the XMPP server for alternate
+     * Adds support for XEP-0156 by querying the XMPP server for alternate
      * connection methods. This allows users to use the websocket or BOSH
      * connection of their own XMPP server instead of a proxy provided by the
      * host of Converse.js.
-     * @method Connnection.discoverConnectionMethods
+     * @method Connection.discoverConnectionMethods
      * @param {string} domain
      */
     async discoverConnectionMethods(domain) {
@@ -230,7 +230,11 @@ export class Connection extends Strophe.Connection {
         const { api } = _converse;
 
         delete this.reconnecting;
-        this.flush(); // Solves problem of returned PubSub BOSH response not received by browser
+        if (this.isType('bosh')) {
+            // Solves problem of returned PubSub BOSH response not received by browser
+            this.flush();
+        }
+
         await setUserJID(this.jid);
 
         // Save the current JID in persistent storage so that we can attempt to
@@ -352,6 +356,9 @@ export class Connection extends Strophe.Connection {
                 reason === "host-unknown" ||
                 reason === "remote-connection-failed"
             ) {
+                return this.finishDisconnection();
+            } else if (this.disconnection_cause === Strophe.Status.CONNFAIL && this.disconnection_reason  === 'not-well-formed') {
+                // Don't try to automatically reconnect on a not-well-formed error
                 return this.finishDisconnection();
             }
             api.connection.reconnect();

@@ -1,23 +1,24 @@
 const path = require('path');
+const { rspack } = require('@rspack/core');
 const { merge } = require('webpack-merge');
 const common = require('../rspack/rspack.common.js');
 
-module.exports = merge(common, {
+const plugins = [
+    new rspack.CopyRspackPlugin({
+        patterns: [
+            { from: 'src/headless/plugins/emoji/emoji.json', to: 'emoji.json' },
+        ],
+    }),
+];
+
+const sharedConfig = {
     entry: {
-        'converse-headless': '@converse/headless',
-        'converse-headless.min': '@converse/headless',
+        'converse-headless': path.resolve(__dirname, '../src/headless/index.js'),
+        'converse-headless.min': path.resolve(__dirname, '../src/headless/index.js'),
     },
-    output: {
-        path: path.resolve(__dirname, '../src/headless/dist'),
-        filename: '[name].js',
-        chunkFilename: '[name].js',
-        globalObject: 'this',
-        library: {
-            name: 'converse',
-            type: 'umd',
-        },
-    },
+    plugins,
     mode: 'production',
+    devtool: 'source-map',
     module: {
         rules: [
             {
@@ -34,4 +35,33 @@ module.exports = merge(common, {
             },
         ],
     },
-});
+};
+
+module.exports = [
+    // CJS Build
+    merge(common, {
+        ...sharedConfig,
+        output: {
+            path: path.resolve(__dirname, '../src/headless/dist'),
+            filename: '[name].js',
+            chunkFilename: '[name].js',
+            globalObject: 'this',
+        },
+    }),
+    // ESM Build
+    merge(common, {
+        ...sharedConfig,
+        experiments: {
+            outputModule: true,
+            topLevelAwait: true,
+        },
+        output: {
+            path: path.resolve(__dirname, '../src/headless/dist'),
+            filename: '[name].esm.js',
+            chunkFilename: '[name].esm.js',
+            library: {
+                type: 'module'
+            }
+        },
+    })
+];

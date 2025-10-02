@@ -1,8 +1,7 @@
 {
   "name": "converse.js",
-  "version": "11.0.1",
+  "version": "12.0.0",
   "description": "Browser based XMPP chat client",
-  "browser": "dist/converse.js",
   "workspaces": [
     "src/headless",
     "src/log"
@@ -11,17 +10,20 @@
     ".": {
       "import": {
         "types": "./src/types/index.d.ts",
-        "default": "./src/index.js"
+        "default": "./dist/converse.esm.js"
       },
       "require": {
-        "types": "./types/index.d.ts",
+        "types": "./src/types/index.d.ts",
         "default": "./dist/converse.js"
       }
-    }
+    },
+    "./dist/*": "./dist/*",
+    "./shared/*": "./src/shared/*"
   },
   "types": "./src/types/index.d.ts",
-  "main": "./src/index.js",
-  "module": "./src/index.js",
+  "browser": "dist/converse.js",
+  "main": "dist/converse.js",
+  "module": "dist/converse.esm.js",
   "files": [
     "CHANGES.md",
     "LICENSE.txt",
@@ -45,23 +47,29 @@
     "3rdparty/*.js"
   ],
   "scripts": {
-    "build": "npm run build:website-min-css && rspack build --config rspack/rspack.build.js",
+    "build": "npm run build:website-min-css && npm run build:headless && npm run build:esm && npm run build:cjs",
+    "build:cjs": "DROP_DEBUGGER=true rspack build --config rspack/rspack.build.cjs.js",
+    "build:esm": "DROP_DEBUGGER=true rspack build --config rspack/rspack.build.esm.js",
+    "build:headless": "rspack build --config rspack/rspack.headless.js",
     "build:website-css": "sass --quiet --load-path=node_modules src/shared/styles/website.scss dist/website.css",
     "build:website-min-css": "npm run build:website-css && npx clean-css-cli dist/website.css > dist/website.min.css",
-    "lint": "eslint src/**/*.js",
-    "test": "karma start karma.conf",
     "cdn": "ASSET_PATH=https://cdn.conversejs.org/dist/ npm run build",
     "clean": "rm -rf node_modules dist *.zip src/headless/dist src/headless/node_modules",
-    "dev": "rspack build --config rspack/rspack.build.js --mode=development",
-    "headless": "rspack build --config rspack/rspack.headless.js",
-    "headless-dev": "rspack build --config rspack/rspack.headless.js --mode=development",
+    "dev": "DROP_DEBUGGER=false npm run dev:headless && rspack build --config rspack/rspack.build.cjs.js --mode=development",
+    "dev:headless": "DROP_DEBUGGER=false rspack build --config rspack/rspack.headless.js --mode=development",
+    "devserver": "npm run dev:headless && npx rspack serve --config rspack/rspack.serve.js",
+    "lint": "eslint src/**/*.js",
     "nodeps": "rspack build --config rspack/rspack.nodeps.js",
     "serve": "http-server -c-1",
     "serve-tls": "http-server -S -C certs/chat.example.org.crt -K certs/chat.example.org.key",
-    "devserver": "npx rspack serve --config rspack/rspack.serve.js",
-    "watch": "rspack build --watch --config rspack/rspack.build.js --mode=development",
+    "test": "karma start karma.conf",
+    "test:all": "npm run test:headless -- --single-run && npm run test -- --single-run",
+    "test:headless": "cd src/headless && karma start karma.conf.js",
     "types": "tsc -p ./src/log/tsconfig.json && tsc -p ./src/headless/tsconfig.json && tsc",
-    "check:types": "tsc --noEmit"
+    "types:check": "tsc --noEmit",
+    "watch": "concurrently \"npm run watch:headless\" \"npm run watch:main\"",
+    "watch:headless": "DROP_DEBUGGER=false rspack --watch --config rspack/rspack.headless.js --mode=development",
+    "watch:main": "DROP_DEBUGGER=false rspack --watch --config rspack/rspack.build.cjs.js --mode=development"
   },
   "repository": {
     "type": "git",
@@ -92,7 +100,7 @@
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.24.0",
     "@rspack/cli": "^1.3.15",
-    "@rspack/core": "^1.3.15",
+    "@rspack/core": "^1.4.11",
     "@types/bootstrap": "^5.2.10",
     "@types/lodash-es": "^4.17.12",
     "@types/sizzle": "^2.3.8",
@@ -101,6 +109,7 @@
     "@typescript-eslint/parser": "^8.29.0",
     "autoprefixer": "^10.4.5",
     "clean-css-cli": "^5.6.2",
+    "concurrently": "^7.6.0",
     "css-loader": "^7.1.2",
     "eslint": "^9.24.0",
     "fast-text-encoding": "^1.0.3",

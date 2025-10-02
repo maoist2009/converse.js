@@ -59,7 +59,7 @@ const DEPRECATED_ATTRS = {
  * @global
  * @namespace _converse
  */
-class ConversePrivateGlobal extends EventEmitter(Object) {
+export class ConversePrivateGlobal extends EventEmitter(Object) {
 
     constructor () {
         super();
@@ -147,10 +147,11 @@ class ConversePrivateGlobal extends EventEmitter(Object) {
     }
 
     initSession () {
-        this.session?.destroy();
-        this.session = new Model();
+        this.state.session?.destroy();
+        this.state.session = new Model();
 
         // XXX DEPRECATED
+        this.session = this.state.session;
         Object.assign(
             this, {
                 jid: undefined,

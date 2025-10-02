@@ -1,10 +1,9 @@
 export default MUCMessage;
-declare class MUCMessage extends BaseMessage<any> {
-    constructor(models?: import("@converse/skeletor").Model[], options?: object);
+declare class MUCMessage extends BaseMessage {
     get occupants(): any;
     getDisplayName(): any;
     /**
-     * Determines whether this messsage may be moderated,
+     * Determines whether this message may be moderated,
      * based on configuration settings and server support.
      * @method _converse.ChatRoomMessages#mayBeModerated
      * @returns {Promise<boolean>}

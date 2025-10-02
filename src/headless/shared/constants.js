@@ -1,7 +1,7 @@
 import { Strophe } from 'strophe.js';
 
 export const BOSH_WAIT = 59;
-export const VERSION_NAME = "v11.0.1";
+export const VERSION_NAME = "v12.0.0";
 
 export const PRES_SHOW_VALUES = ['chat', 'dnd', 'away', 'xa'];
 export const PRES_TYPE_VALUES = [
@@ -143,6 +143,7 @@ export const CORE_PLUGINS = [
     'converse-smacks',
     'converse-status',
     'converse-vcard',
+    'converse-omemo',
 ];
 
 export const CHAT_STATES = ['active', 'composing', 'gone', 'inactive', 'paused'];

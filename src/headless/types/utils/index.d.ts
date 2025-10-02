@@ -8,7 +8,7 @@ export function isEmptyMessage(attrs: any): boolean;
  * inserted before the mentioned nicknames.
  * @param {import('../shared/message').default} message
  */
-export function prefixMentions(message: import("../shared/message").default<any>): any;
+export function prefixMentions(message: import("../shared/message").default): any;
 export function getRandomInt(max: any): number;
 /**
  * @param {string} [suffix]
@@ -43,9 +43,9 @@ declare const _default: {
     firstCharToUpperCase(text: string): string;
     getLongestSubstring(string: string, candidates: string[]): string;
     isString(s: any): boolean;
-    getDefaultStore(): "session" | "persistent";
-    createStore(id: any, store: any): any;
-    initStorage(model: any, id: any, type: any): void;
+    getDefaultStorageType(): import("./types.js").StorageType;
+    createStore(id: string, type: import("./types.js").StorageType): any;
+    initStorage(model: import("@converse/skeletor").Model | import("@converse/skeletor").Collection, id: string, type?: import("./types.js").StorageType): void;
     isErrorStanza(stanza: Element): boolean;
     isForbiddenError(stanza: Element): boolean;
     isServiceUnavailableError(stanza: Element): boolean;
@@ -85,6 +85,7 @@ declare const _default: {
     savedLoginInfo(jid: string): Promise<Model>;
     safeSave(model: Model, attributes: any, options: any): void;
     isElement(el: unknown): boolean;
+    isEqualNode(actual: Element, expected: Element): boolean;
     isTagEqual(stanza: Element | typeof import("strophe.js").Builder, name: string): boolean;
     stringToElement(s: string): Element;
     queryChildren(el: HTMLElement, selector: string): ChildNode[];
@@ -111,7 +112,7 @@ export type CommonUtils = Record<string, Function>;
 /**
  * The utils object
  */
-export type PluginUtils = Record<"muc" | "mam", CommonUtils>;
+export type PluginUtils = Record<"muc" | "mam" | "omemo" | "roster", CommonUtils>;
 /**
  * Call the callback once all the events have been triggered
  * @param { Array } events: An array of objects, with keys `object` and
@@ -129,8 +130,8 @@ declare function shouldCreateMessage(attrs: any): any;
  * @param {boolean} [cancelable]
  */
 declare function triggerEvent(el: Element, name: string, type?: string, bubbles?: boolean, cancelable?: boolean): void;
+import { Model } from '@converse/skeletor';
 import * as session from './session.js';
 import * as promise from './promise.js';
-import { Model } from '@converse/skeletor';
 import * as init from './init.js';
 //# sourceMappingURL=index.d.ts.map
